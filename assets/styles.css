@@ -1,0 +1,580 @@
+:root {
+  --bg: #222224;
+  --title: #fffff1;
+  --text: #969696;
+  --link: #939c40;
+
+  --panel: #1b1b1d;
+  --border: rgba(255, 255, 241, 0.08);
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: "Playwrite CU Guides", var(--font);
+
+  /* Scrollbar colors */
+  --sb-track: #2a2a2c;
+  --sb-thumb: #5a5a5e;
+  --sb-thumb-hover: #6a6a6f;
+
+  /* List colors */
+  --meta: rgba(150, 150, 150, 0.95);
+  --date: rgba(255, 255, 241, 0.85);
+
+  /* Header spacing */
+  --header-top-pad: 0px;
+  --header-bottom-pad: 6px;
+  --header-overlap: 64px;
+  --logo-lift: 14px;
+
+  --content-max: 1160px;
+  --radius: 12px;
+}
+
+@font-face {
+  font-family: "Playwrite CU Guides";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+/* Global scrollbars (WebKit/Blink) */
+*::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--sb-track);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb);
+  border-radius: 999px;
+  border: 3px solid var(--sb-track);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--sb-thumb-hover);
+}
+
+/* Global scrollbars (Firefox) */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: var(--sb-thumb) var(--sb-track);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+}
+
+a {
+  color: var(--link);
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+main {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 2px 18px 20px;
+  position: relative; /* allow header to stack above slideshow */
+}
+
+/* Ensure header/logo always sits above the slideshow layers */
+header {
+  position: absolute;
+  z-index: 10;
+}
+
+/* Slideshow stays behind header/logo */
+.slideshow {
+  position: relative;
+  z-index: 1;
+}
+
+/* Make the logo explicitly top-most inside the header */
+.logo {
+  position: relative;
+  z-index: 11;
+}
+
+/* (optional) If the h1 overlaps too, keep it above slideshow too */
+header h1 {
+  z-index: 11;
+}
+
+/* Title becomes a "hero label" over the slideshow */
+header h1 {
+  position: absolute;
+  left: 300px; /* roughly logo width + gap (340 + 16 + a bit) */
+  bottom: 50px; /* pushes it onto the slideshow */
+  margin: 0;
+  padding: 0;
+
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1;
+  color: darkgray;
+  letter-spacing: 0.2px;
+  font-family: var(--font-display);
+
+  text-shadow:
+    -1px -1px 0 rgba(0, 0, 0, 0.55),
+    1px -1px 0 rgba(0, 0, 0, 0.55),
+    -1px 1px 0 rgba(0, 0, 0, 0.55),
+    1px 1px 0 rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.55);
+}
+
+/* Pull the slideshow up closer to the browser top */
+.slideshow {
+  margin-top: -14px;
+}
+
+/* Logo */
+.logo {
+  width: 300px;
+  transform: translateY(var(--logo-lift));
+
+  /* stronger separation on bright slides */
+  filter:
+    drop-shadow(0 8px 24px rgba(0, 0, 0, 0.85))
+    drop-shadow(0 2px 10px rgba(0, 0, 0, 0.55));
+}
+
+/* Slideshow */
+.slideshow {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: min(560px, 62vh);
+  border: 1px solid rgba(255, 255, 241, 0.1);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 60px rgba(0, 0, 0, 0.35);
+  background: var(--panel);
+  overflow: hidden;
+  margin: 20px 0 18px;
+  text-decoration: none;
+  z-index: 1;
+}
+
+@keyframes slideshowKenBurnsUp {
+  from {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.06) translate3d(0, -12px, 0);
+  }
+}
+
+.slideshow__layer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: 50% 34%;
+
+  opacity: 0;
+  transition: opacity 1800ms ease-in-out;
+
+  transform: scale(1.02) translate3d(0, 0, 0);
+  animation: none;
+
+  will-change: transform, opacity;
+
+  z-index: 0;
+}
+
+/* Visibility = opacity only */
+.slideshow__layer.is-visible {
+  opacity: 1;
+}
+
+/* Animation = zoom only */
+.slideshow__layer.is-animating {
+  animation: slideshowKenBurnsUp var(--slide-ms, 9000ms) linear both;
+}
+
+/* When NOT animating, enforce baseline transform */
+.slideshow__layer:not(.is-animating) {
+  transform: scale(1.02) translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slideshow__layer,
+  .slideshow__layer.is-visible,
+  .slideshow__layer.is-animating {
+    transition: opacity 1800ms ease-in-out;
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+.slideshow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}
+
+/* Search follows while scrolling */
+label[for="missionSearch"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+#missionSearch {
+  position: fixed;
+  z-index: 30;
+
+  right: 22px;
+  bottom: 22px;
+
+  width: min(420px, calc(100% - 44px));
+  max-width: none;
+
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 241, 0.18);
+  background: rgba(27, 27, 29, 0.88);
+  color: var(--title);
+  outline: none;
+
+  box-shadow:
+    10px 0 18px rgba(0, 0, 0, 0.45),
+    0 -10px 18px rgba(0, 0, 0, 0.45),
+    0 10px 28px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+}
+
+#missionSearch::placeholder {
+  color: rgba(255, 255, 241, 0.65);
+}
+
+#missionSearch:focus {
+  border-color: rgba(147, 156, 64, 0.75);
+  box-shadow:
+    10px 0 18px rgba(0, 0, 0, 0.45),
+    0 -10px 18px rgba(0, 0, 0, 0.45),
+    0 10px 28px rgba(0, 0, 0, 0.55),
+    0 0 0 3px rgba(147, 156, 64, 0.22);
+}
+
+/* Mission counter pill (fixed, right side above the search/filter) */
+#status {
+  position: fixed;
+  z-index: 31;
+
+  right: 22px;
+  bottom: 80px; /* sits above the search overlay */
+  padding: 8px 12px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 241, 0.14);
+  background: rgba(27, 27, 29, 0.78);
+  color: rgba(255, 255, 241, 0.9);
+
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+
+  box-shadow:
+    10px 0 18px rgba(0, 0, 0, 0.35),
+    0 -10px 18px rgba(0, 0, 0, 0.35),
+    0 10px 22px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+/* Keep list from being hidden behind the fixed overlays on short pages */
+#missionList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  padding-bottom: 110px;
+}
+
+#missionList li {
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(27, 27, 29, 0.92), rgba(27, 27, 29, 0.82));
+  transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
+}
+
+#missionList li:last-child {
+  margin-bottom: 0;
+}
+
+#missionList li:hover {
+  border-color: rgba(147, 156, 64, 0.35);
+  box-shadow: inset 3px 0 0 rgba(147, 156, 64, 0.55);
+}
+
+.missionRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Make the whole mission row clickable (the <a> fills the row) */
+.missionRow__left {
+  position: relative;
+}
+
+.missionRow__left a {
+  display: block;
+  padding: 12px 14px;
+  margin: -12px -14px; /* match #missionList li padding so anchor covers full li */
+  border-radius: var(--radius);
+}
+
+/* Ensure clicks land on the <a> even when clicking its children */
+.missionRow__left a * {
+  pointer-events: none;
+}
+
+.missionRow__left a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+.missionRow__left a:hover {
+  text-decoration: underline;
+}
+
+.missionRow__title {
+  color: inherit;
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: 0.2px;
+}
+
+.missionRow__right {
+  display: inline-flex;
+  gap: 10px;
+  align-items: baseline;
+  justify-content: flex-end;
+  white-space: nowrap;
+  color: rgba(150, 150, 150, 0.9);
+}
+
+.missionRow__date {
+  color: var(--date);
+}
+
+/* Lightbox */
+.lightbox {
+  width: min(1400px, calc(100% - 20px));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.lightbox::backdrop {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.lightbox__frame {
+  position: relative;
+  padding: 12px;
+}
+
+.lightbox__close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--title);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.lightbox__header {
+  padding-right: 52px;
+}
+
+.lightbox__title {
+  color: var(--title);
+  font-weight: 600;
+}
+
+.lightbox__subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.lightbox__body {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 46px 1fr 46px;
+  gap: 10px;
+  align-items: center;
+}
+
+.lightbox__nav {
+  height: 56px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--title);
+  font-size: 28px;
+  cursor: pointer;
+}
+
+.lightbox__figure {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.lightbox__img {
+  display: block;
+  width: 100%;
+  height: min(70vh, 720px);
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.lightbox__caption {
+  padding: 8px 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lightbox__thumbs {
+  margin-top: 10px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 110px;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.lbthumb {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  overflow: hidden;
+  height: 70px;
+}
+
+.lbthumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.92;
+}
+
+.lbthumb.is-active {
+  outline: 2px solid var(--link);
+  outline-offset: 0;
+  border-color: rgba(147, 156, 64, 0.7);
+}
+
+.slideshow__caption {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  z-index: 3; /* above layers and above ::after gradient */
+
+  max-width: min(78%, 760px);
+  padding: 10px 12px;
+
+  border: 1px solid rgba(255, 255, 241, 0.12);
+  border-radius: 12px;
+
+  background: rgba(20, 20, 22, 0.55);
+  backdrop-filter: blur(6px);
+
+  color: rgba(255, 255, 241, 0.92);
+
+  pointer-events: none;
+}
+
+.slideshow__captionTitle {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.1;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+
+  text-shadow:
+    -1px -1px 0 rgba(0, 0, 0, 0.75),
+    1px -1px 0 rgba(0, 0, 0, 0.75),
+    -1px 1px 0 rgba(0, 0, 0, 0.75),
+    1px 1px 0 rgba(0, 0, 0, 0.75),
+    0 2px 8px rgba(0, 0, 0, 0.75);
+}
+
+.slideshow__captionMeta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 241, 0.75);
+}
+
+@media (max-width: 620px) {
+  main {
+    padding: 2px 14px 18px;
+  }
+
+  header h1 {
+    left: 300px;
+    bottom: 50px;
+    font-size: 30px;
+  }
+
+  .slideshow {
+    margin: 20px 0 18px;
+    height: min(440px, 56vh);
+  }
+
+  .slideshow__caption {
+    left: 10px;
+    bottom: 10px;
+    max-width: calc(100% - 20px);
+  }
+
+  .slideshow__captionTitle {
+    font-size: 16px;
+  }
+}
