@@ -750,6 +750,16 @@ function setupZoomModalUi() {
     }
   };
 
+  const canPan = () => {
+    const stageW = stage.clientWidth;
+    const stageH = stage.clientHeight;
+
+    const imgW = img.naturalWidth * zoom.scale;
+    const imgH = img.naturalHeight * zoom.scale;
+
+    return imgW > stageW + 0.5 || imgH > stageH + 0.5;
+  };
+
   const setScaleAtPoint = (nextScale, mouseX, mouseY) => {
     const prevScale = zoom.scale;
     const s = clamp(nextScale, zoom.minScale, zoom.maxScale);
@@ -812,7 +822,7 @@ function setupZoomModalUi() {
     // Mouse: only left button. Touch/Pen: allow.
     if (e.pointerType === "mouse" && e.button !== 0) return;
 
-    if (zoom.scale <= 1.0001) return;
+    if (!canPan()) return;
 
     zoom.dragging = true;
     zoom.dragStartX = e.clientX;
