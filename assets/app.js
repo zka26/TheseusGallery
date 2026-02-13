@@ -519,9 +519,29 @@ function startHomepageSlideshow(galleryIndex) {
   });
 }
 
+function setMissionsView(view) {
+  const v = view === "grid" ? "grid" : "list";
+  document.body.dataset.view = v;
+  try {
+    localStorage.setItem("missionsView", v);
+  } catch {
+    // ignore
+  }
+}
+
+function getMissionsView() {
+  try {
+    const v = localStorage.getItem("missionsView");
+    return v === "grid" ? "grid" : "list";
+  } catch {
+    return "list";
+  }
+}
+
 function renderMissions(missions, galleryIndex, query) {
   const ul = document.getElementById("missionList");
   const status = document.getElementById("status");
+  const isGrid = document.body.dataset.view === "grid";
 
   const q = normalizeString(query);
 
@@ -554,21 +574,44 @@ function renderMissions(missions, galleryIndex, query) {
       const first = (galleryIndex?.byMission?.[m.id] || [])[0] || "";
       const href = deepLink(m.id, first);
 
-      const countText = `${count} image(s)`;
-      const date = m.date ? `(${escapeHtml(m.date)})` : "";
+      if (!isGrid) {
+        const countText = `${count} image(s)`;
+        const date = m.date ? `(${escapeHtml(m.date)})` : "";
+
+        return `
+          <li>
+            <div class="missionRow">
+              <div class="missionRow__left">
+                <a href="${href}" data-open-mission="${escapeHtml(m.id)}">
+                  <span class="missionRow__title">${escapeHtml(m.name)}</span>
+                </a>
+              </div>
+              <div class="missionRow__right">
+                <span class="missionRow__count">${escapeHtml(countText)}</span>
+                ${date ? `<span class="missionRow__date">${date}</span>` : ""}
+              </div>
+            </div>
+          </li>
+        `;
+      }
+
+      const thumbUrl = first ? imageUrl(m.id, first) : "";
+      const title = escapeHtml(m.name);
+      const dateText = m.date ? escapeHtml(m.date) : "";
 
       return `
         <li>
-          <div class="missionRow">
-            <div class="missionRow__left">
-              <a href="${href}" data-open-mission="${escapeHtml(m.id)}">
-                <span class="missionRow__title">${escapeHtml(m.name)}</span>
-              </a>
-            </div>
-            <div class="missionRow__right">
-              <span class="missionRow__count">${escapeHtml(countText)}</span>
-              ${date ? `<span class="missionRow__date">${date}</span>` : ""}
-            </div>
+          <div class="missionCard">
+            <a class="missionCard__link" href="${href}" data-open-mission="${escapeHtml(m.id)}">
+              <div class="missionCard__top">
+                ${thumbUrl ? `<img class="missionCard__thumb" loading="lazy" src="${thumbUrl}" alt="" />` : ""}
+                <div class="missionCard__count">${escapeHtml(String(count))}</div>
+              </div>
+              <div class="missionCard__meta">
+                <div class="missionCard__title">${title}</div>
+                ${dateText ? `<div class="missionCard__date">${dateText}</div>` : ""}
+              </div>
+            </a>
           </div>
         </li>
       `;
@@ -601,8 +644,17 @@ async function main() {
 
   startHomepageSlideshow(galleryIndex);
 
+  setMissionsView(getMissionsView());
+
   const search = document.getElementById("missionSearch");
   const rerender = () => renderMissions(missions, galleryIndex, search.value);
+
+  const toggle = document.getElementById("viewToggle");
+  toggle.addEventListener("click", () => {
+    setMissionsView(document.body.dataset.view === "grid" ? "list" : "grid");
+    rerender();
+  });
+
   search.addEventListener("input", rerender);
   rerender();
 
