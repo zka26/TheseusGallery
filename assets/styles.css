@@ -369,6 +369,17 @@ label[for="missionSearch"] {
   transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
 }
 
+body[data-view="grid"] #missionList li {
+  padding: 0;
+  margin-bottom: 0;
+
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+
+  overflow: hidden;
+}
+
 #missionList li:last-child {
   margin-bottom: 0;
 }
