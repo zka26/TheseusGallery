@@ -81,6 +81,20 @@
       </div>
     </dialog>
 
+    <dialog id="zoomModal" class="zoomModal" aria-label="Full screen image viewer">
+      <div class="zoomModal__frame">
+        <button id="zoomClose" class="zoomModal__close" type="button" aria-label="Close">&times;</button>
+
+        <div id="zoomStage" class="zoomModal__stage" tabindex="0">
+          <img id="zoomImg" class="zoomModal__img" alt="" />
+        </div>
+
+        <div class="zoomModal__hint" aria-hidden="true">
+          Scroll to zoom · Drag to pan
+        </div>
+      </div>
+    </dialog>
+
     <script src="assets/app.js"></script>
   </body>
 </html>

@@ -319,7 +319,7 @@ function setupLightboxUi() {
 
   document.getElementById("lightboxImg").addEventListener("click", (e) => {
     e.preventDefault();
-    openCurrentImageInNewTab();
+    openZoomModal(lb.currentImageUrl);
   });
 
   window.addEventListener("keydown", (e) => {
@@ -628,8 +628,245 @@ function renderMissions(missions, galleryIndex, query) {
   });
 }
 
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+const zoom = {
+  isOpen: false,
+  scale: 1,
+  minScale: 1,
+  maxScale: 6,
+  x: 0,
+  y: 0,
+  dragging: false,
+  dragStartX: 0,
+  dragStartY: 0,
+  startX: 0,
+  startY: 0
+};
+
+function applyZoomTransform() {
+  const img = document.getElementById("zoomImg");
+  img.style.transform = `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.scale})`;
+}
+
+function resetZoom() {
+  const stage = document.getElementById("zoomStage");
+  const img = document.getElementById("zoomImg");
+
+  const stageW = stage?.clientWidth ?? 0;
+  const stageH = stage?.clientHeight ?? 0;
+
+  const imgW = img?.naturalWidth ?? 0;
+  const imgH = img?.naturalHeight ?? 0;
+
+  if (!stageW || !stageH || !imgW || !imgH) {
+    zoom.scale = 1;
+    zoom.minScale = 1;
+    zoom.x = 0;
+    zoom.y = 0;
+    applyZoomTransform();
+    return;
+  }
+
+  // Fit image inside stage ("contain") with a tiny margin so it doesn't touch edges.
+  const pad = 16;
+  const availW = Math.max(1, stageW - pad * 2);
+  const availH = Math.max(1, stageH - pad * 2);
+
+  const fitScale = Math.min(availW / imgW, availH / imgH);
+
+  // Start at fit-to-screen and treat that as the minimum zoom-out level.
+  zoom.scale = fitScale;
+  zoom.minScale = fitScale;
+
+  // Center image at the fitted size.
+  const scaledW = imgW * zoom.scale;
+  const scaledH = imgH * zoom.scale;
+
+  zoom.x = Math.round((stageW - scaledW) / 2);
+  zoom.y = Math.round((stageH - scaledH) / 2);
+
+  applyZoomTransform();
+}
+
+function openZoomModal(imageUrl) {
+  if (!imageUrl) return;
+
+  const d = document.getElementById("zoomModal");
+  const img = document.getElementById("zoomImg");
+
+  img.onload = () => {
+    resetZoom();
+  };
+
+  img.src = imageUrl;
+
+  if (!d.open) d.showModal();
+  zoom.isOpen = true;
+
+  const stage = document.getElementById("zoomStage");
+  stage.focus();
+}
+
+function closeZoomModal() {
+  const d = document.getElementById("zoomModal");
+  if (d.open) d.close();
+}
+
+function setupZoomModalUi() {
+  const d = document.getElementById("zoomModal");
+  const stage = document.getElementById("zoomStage");
+  const btnClose = document.getElementById("zoomClose");
+  const img = document.getElementById("zoomImg");
+
+  // Prevent native image drag ("ghost" image) from hijacking pan.
+  img.setAttribute("draggable", "false");
+  img.addEventListener("dragstart", (e) => e.preventDefault());
+  stage.addEventListener("dragstart", (e) => e.preventDefault());
+
+  const clampPanToBounds = () => {
+    const stageW = stage.clientWidth;
+    const stageH = stage.clientHeight;
+
+    const imgW = img.naturalWidth * zoom.scale;
+    const imgH = img.naturalHeight * zoom.scale;
+
+    if (imgW <= stageW) {
+      zoom.x = Math.round((stageW - imgW) / 2);
+    } else {
+      const minX = stageW - imgW;
+      const maxX = 0;
+      zoom.x = clamp(zoom.x, minX, maxX);
+    }
+
+    if (imgH <= stageH) {
+      zoom.y = Math.round((stageH - imgH) / 2);
+    } else {
+      const minY = stageH - imgH;
+      const maxY = 0;
+      zoom.y = clamp(zoom.y, minY, maxY);
+    }
+  };
+
+  const setScaleAtPoint = (nextScale, mouseX, mouseY) => {
+    const prevScale = zoom.scale;
+    const s = clamp(nextScale, zoom.minScale, zoom.maxScale);
+    if (s === prevScale) return;
+
+    const scaleRatio = s / prevScale;
+    zoom.x = mouseX - (mouseX - zoom.x) * scaleRatio;
+    zoom.y = mouseY - (mouseY - zoom.y) * scaleRatio;
+    zoom.scale = s;
+
+    clampPanToBounds();
+    applyZoomTransform();
+  };
+
+  btnClose.addEventListener("click", () => closeZoomModal());
+
+  d.addEventListener("close", () => {
+    zoom.isOpen = false;
+    zoom.dragging = false;
+  });
+
+  d.addEventListener("click", (e) => {
+    if (e.target === d) closeZoomModal();
+  });
+
+  let ignoreWheelUntilMs = 0;
+
+  d.addEventListener("cancel", (e) => {
+    e.preventDefault();
+    closeZoomModal();
+  });
+
+  const markJustOpened = () => {
+    ignoreWheelUntilMs = Date.now() + 250;
+  };
+
+  d.addEventListener("transitionend", markJustOpened);
+  d.addEventListener("focusin", () => {
+    if (d.open) markJustOpened();
+  });
+
+  stage.addEventListener("wheel", (e) => {
+    if (!zoom.isOpen) return;
+    if (Date.now() < ignoreWheelUntilMs) return;
+
+    e.preventDefault();
+
+    const rect = stage.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const direction = e.deltaY < 0 ? 1 : -1;
+    const factor = direction > 0 ? 1.12 : 1 / 1.12;
+    setScaleAtPoint(zoom.scale * factor, mouseX, mouseY);
+  }, { passive: false });
+
+  stage.addEventListener("pointerdown", (e) => {
+    if (!zoom.isOpen) return;
+
+    // Mouse: only left button. Touch/Pen: allow.
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+
+    if (zoom.scale <= 1.0001) return;
+
+    zoom.dragging = true;
+    zoom.dragStartX = e.clientX;
+    zoom.dragStartY = e.clientY;
+    zoom.startX = zoom.x;
+    zoom.startY = zoom.y;
+
+    stage.setPointerCapture(e.pointerId);
+  });
+
+  stage.addEventListener("pointermove", (e) => {
+    if (!zoom.dragging) return;
+
+    const dx = e.clientX - zoom.dragStartX;
+    const dy = e.clientY - zoom.dragStartY;
+
+    zoom.x = zoom.startX + dx;
+    zoom.y = zoom.startY + dy;
+
+    clampPanToBounds();
+    applyZoomTransform();
+  });
+
+  stage.addEventListener("pointerup", (e) => {
+    zoom.dragging = false;
+    try {
+      stage.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  });
+
+  stage.addEventListener("pointercancel", () => {
+    zoom.dragging = false;
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (!d.open) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      closeZoomModal();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (!d.open) return;
+    clampPanToBounds();
+    applyZoomTransform();
+  });
+}
+
 async function main() {
   setupLightboxUi();
+  setupZoomModalUi();
 
   const status = document.getElementById("status");
   status.textContent = "Loading...";
