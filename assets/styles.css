@@ -624,6 +624,18 @@ label[for="missionSearch"] {
   }
 }
 
+@media (max-width: 980px) {
+  body[data-view="grid"] #missionList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  body[data-view="grid"] #missionList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* Footer */
 .siteFooter {
   max-width: var(--content-max);
@@ -733,10 +745,16 @@ body[data-view="grid"] #missionList {
   gap: 10px;
 }
 
-/* Reduce padding so cards pack nicely */
-body[data-view="grid"] #missionList li {
-  padding: 0;
-  overflow: hidden;
+@media (max-width: 980px) {
+  body[data-view="grid"] #missionList {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  body[data-view="grid"] #missionList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .missionCard {
