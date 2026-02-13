@@ -532,9 +532,9 @@ function setMissionsView(view) {
 function getMissionsView() {
   try {
     const v = localStorage.getItem("missionsView");
-    return v === "grid" ? "grid" : "list";
+    return v === "list" || v === "grid" ? v : "grid";
   } catch {
-    return "list";
+    return "grid";
   }
 }
 
