@@ -3,6 +3,8 @@ import sys
 from pathlib import Path
 from PIL import Image
 
+#Use from repo folder: python tools\optimize_images.py images
+
 ALLOWED = {".jpg", ".jpeg", ".png"}
 
 def human(n: int) -> str:
